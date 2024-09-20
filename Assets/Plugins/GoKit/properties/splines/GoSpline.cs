@@ -1,5 +1,3 @@
-// spline equation courtesy Andeeee's CRSpline (http://forum.unity3d.com/threads/32954-Waypoints-and-constant-variable-speed-problems?p=213942&viewfull=1#post213942)
-
 using UnityEngine;
 using System.IO;
 using System.Collections;
@@ -59,11 +57,11 @@ public class GoSpline
 	/// </summary>
 	private static List<Vector3> nodeListFromAsset( string pathAssetName )
 	{
-		if( Application.platform == RuntimePlatform.OSXWebPlayer || Application.platform == RuntimePlatform.WindowsWebPlayer )
+/*		if( Application.platform == RuntimePlatform.OSXWebPlayer || Application.platform == RuntimePlatform.WindowsWebPlayer )
 		{
 			Debug.LogError( "The Web Player does not support loading files from disk." );
 			return null;
-		}
+		}*/
 
 		
 		var path = string.Empty;
