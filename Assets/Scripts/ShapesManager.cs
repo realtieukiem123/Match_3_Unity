@@ -7,23 +7,21 @@ using UnityEngine.UI;
 
 public class ShapesManager : MonoBehaviour
 {
-    public Text DebugText, ScoreText;
-    public bool ShowDebugInfo = false;
-    //candy graphics taken from http://opengameart.org/content/candy-pack-1
+    public Text ScoreText;
 
     public ShapesArray shapes;
 
     private int score;
 
     public readonly Vector2 BottomRight = new Vector2(-2.37f, -4.27f);
-    public readonly Vector2 CandySize = new Vector2(0.7f, 0.7f);
+    public readonly Vector2 CandySize = new Vector2(0.8f, 0.8f);
 
     private GameState state = GameState.None;
     private GameObject hitGo = null;
     private Vector2[] SpawnPositions;
     public GameObject[] CandyPrefabs;
     public GameObject[] ExplosionPrefabs;
-    public GameObject[] BonusPrefabs;
+    //public GameObject[] BonusPrefabs;
 
     private IEnumerator CheckPotentialMatchesCoroutine;
     private IEnumerator AnimatePotentialMatchesCoroutine;
@@ -31,12 +29,6 @@ public class ShapesManager : MonoBehaviour
     IEnumerable<GameObject> potentialMatches;
 
     public SoundManager soundManager;
-    void Awake()
-    {
-        DebugText.enabled = ShowDebugInfo;
-    }
-
-    // Use this for initialization
     void Start()
     {
         InitializeTypesOnPrefabShapesAndBonuses();
@@ -46,9 +38,6 @@ public class ShapesManager : MonoBehaviour
         StartCheckForPotentialMatches();
     }
 
-    /// <summary>
-    /// Initialize shapes
-    /// </summary>
     private void InitializeTypesOnPrefabShapesAndBonuses()
     {
         //just assign the name of the prefab
@@ -56,13 +45,6 @@ public class ShapesManager : MonoBehaviour
         {
             item.GetComponent<Shape>().Type = item.name;
 
-        }
-
-        //assign the name of the respective "normal" candy as the type of the Bonus
-        foreach (var item in BonusPrefabs)
-        {
-            item.GetComponent<Shape>().Type = CandyPrefabs.
-                Where(x => x.GetComponent<Shape>().Type.Contains(item.name.Split('_')[1].Trim())).Single().name;
         }
     }
 
@@ -128,9 +110,7 @@ public class ShapesManager : MonoBehaviour
                 {
                     newCandy = GetRandomCandy();
                 }
-
                 InstantiateAndPlaceNewCandy(row, column, newCandy);
-
             }
         }
 
@@ -147,6 +127,7 @@ public class ShapesManager : MonoBehaviour
 
         //assign the specific properties
         go.GetComponent<Shape>().Assign(newCandy.GetComponent<Shape>().Type, row, column);
+        go.transform.SetParent(transform);
         shapes[row, column] = go;
     }
 
@@ -160,12 +141,6 @@ public class ShapesManager : MonoBehaviour
         }
     }
 
-
-
-
-    /// <summary>
-    /// Destroy all candy gameobjects
-    /// </summary>
     private void DestroyAllCandy()
     {
         for (int row = 0; row < Constants.Rows; row++)
@@ -181,9 +156,6 @@ public class ShapesManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (ShowDebugInfo)
-            DebugText.text = DebugUtilities.GetArrayContents(shapes);
-
         if (state == GameState.None)
         {
             //user has clicked or touched
@@ -230,12 +202,6 @@ public class ShapesManager : MonoBehaviour
             }
         }
     }
-
-    /// <summary>
-    /// Modifies sorting layers for better appearance when dragging/animating
-    /// </summary>
-    /// <param name="hitGo"></param>
-    /// <param name="hitGo2"></param>
     private void FixSortingLayer(GameObject hitGo, GameObject hitGo2)
     {
         SpriteRenderer sp1 = hitGo.GetComponent<SpriteRenderer>();
@@ -278,19 +244,6 @@ public class ShapesManager : MonoBehaviour
             shapes.UndoSwap();
         }
 
-        //if more than 3 matches and no Bonus is contained in the line, we will award a new Bonus
-        bool addBonus = totalMatches.Count() >= Constants.MinimumMatchesForBonus &&
-            !BonusTypeUtilities.ContainsDestroyWholeRowColumn(hitGomatchesInfo.BonusesContained) &&
-            !BonusTypeUtilities.ContainsDestroyWholeRowColumn(hitGo2matchesInfo.BonusesContained);
-
-        Shape hitGoCache = null;
-        if (addBonus)
-        {
-            //get the game object that was of the same type
-            var sameTypeGo = hitGomatchesInfo.MatchedCandy.Count() > 0 ? hitGo : hitGo2;
-            hitGoCache = sameTypeGo.GetComponent<Shape>();
-        }
-
         int timesRun = 1;
         while (totalMatches.Count() >= Constants.MinimumMatches)
         {
@@ -307,12 +260,6 @@ public class ShapesManager : MonoBehaviour
                 shapes.Remove(item);
                 RemoveFromScene(item);
             }
-
-            //check and instantiate Bonus if needed
-            if (addBonus)
-                CreateBonus(hitGoCache);
-
-            addBonus = false;
 
             //get the columns that we had a collapse
             var columns = totalMatches.Select(go => go.GetComponent<Shape>().Column).Distinct();
@@ -346,32 +293,7 @@ public class ShapesManager : MonoBehaviour
         StartCheckForPotentialMatches();
     }
 
-    /// <summary>
-    /// Creates a new Bonus based on the shape parameter
-    /// </summary>
-    /// <param name="hitGoCache"></param>
-    private void CreateBonus(Shape hitGoCache)
-    {
-        GameObject Bonus = Instantiate(GetBonusFromType(hitGoCache.Type), BottomRight
-            + new Vector2(hitGoCache.Column * CandySize.x,
-                hitGoCache.Row * CandySize.y), Quaternion.identity)
-            as GameObject;
-        shapes[hitGoCache.Row, hitGoCache.Column] = Bonus;
-        var BonusShape = Bonus.GetComponent<Shape>();
-        //will have the same type as the "normal" candy
-        BonusShape.Assign(hitGoCache.Type, hitGoCache.Row, hitGoCache.Column);
-        //add the proper Bonus type
-        BonusShape.Bonus |= BonusType.DestroyWholeRowColumn;
-    }
-
-
-
-
-    /// <summary>
-    /// Spawns new candy in columns that have missing ones
-    /// </summary>
-    /// <param name="columnsWithMissingCandy"></param>
-    /// <returns>Info about new candies created</returns>
+   
     private AlteredCandyInfo CreateNewCandyInSpecificColumns(IEnumerable<int> columnsWithMissingCandy)
     {
         AlteredCandyInfo newCandyInfo = new AlteredCandyInfo();
@@ -386,6 +308,7 @@ public class ShapesManager : MonoBehaviour
                 GameObject newCandy = Instantiate(go, SpawnPositions[column], Quaternion.identity)
                     as GameObject;
 
+                newCandy.transform.SetParent(transform);
                 newCandy.GetComponent<Shape>().Assign(go.GetComponent<Shape>().Type, item.Row, item.Column);
 
                 if (Constants.Rows - item.Row > newCandyInfo.MaxDistance)
@@ -398,10 +321,6 @@ public class ShapesManager : MonoBehaviour
         return newCandyInfo;
     }
 
-    /// <summary>
-    /// Animates gameobjects to their new position
-    /// </summary>
-    /// <param name="movedGameObjects"></param>
     private void MoveAndAnimate(IEnumerable<GameObject> movedGameObjects, int distance)
     {
         foreach (var item in movedGameObjects)
@@ -411,22 +330,15 @@ public class ShapesManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Destroys the item from the scene and instantiates a new explosion gameobject
-    /// </summary>
-    /// <param name="item"></param>
     private void RemoveFromScene(GameObject item)
     {
         GameObject explosion = GetRandomExplosion();
         var newExplosion = Instantiate(explosion, item.transform.position, Quaternion.identity) as GameObject;
+        newExplosion.transform.SetParent(transform);
         Destroy(newExplosion, Constants.ExplosionDuration);
         Destroy(item);
     }
 
-    /// <summary>
-    /// Get a random candy
-    /// </summary>
-    /// <returns></returns>
     private GameObject GetRandomCandy()
     {
         return CandyPrefabs[Random.Range(0, CandyPrefabs.Length)];
@@ -449,34 +361,11 @@ public class ShapesManager : MonoBehaviour
         ScoreText.text = "Score: " + score.ToString();
     }
 
-    /// <summary>
-    /// Get a random explosion
-    /// </summary>
-    /// <returns></returns>
     private GameObject GetRandomExplosion()
     {
         return ExplosionPrefabs[Random.Range(0, ExplosionPrefabs.Length)];
     }
 
-    /// <summary>
-    /// Gets the specified Bonus for the specific type
-    /// </summary>
-    /// <param name="type"></param>
-    /// <returns></returns>
-    private GameObject GetBonusFromType(string type)
-    {
-        string color = type.Split('_')[1].Trim();
-        foreach (var item in BonusPrefabs)
-        {
-            if (item.GetComponent<Shape>().Type.Contains(color))
-                return item;
-        }
-        throw new System.Exception("Wrong type");
-    }
-
-    /// <summary>
-    /// Starts the coroutines, keeping a reference to stop later
-    /// </summary>
     private void StartCheckForPotentialMatches()
     {
         StopCheckForPotentialMatches();
@@ -497,9 +386,6 @@ public class ShapesManager : MonoBehaviour
         ResetOpacityOnPotentialMatches();
     }
 
-    /// <summary>
-    /// Resets the opacity on potential matches (probably user dragged something?)
-    /// </summary>
     private void ResetOpacityOnPotentialMatches()
     {
         if (potentialMatches != null)
@@ -512,11 +398,6 @@ public class ShapesManager : MonoBehaviour
                 item.GetComponent<SpriteRenderer>().color = c;
             }
     }
-
-    /// <summary>
-    /// Finds potential matches
-    /// </summary>
-    /// <returns></returns>
     private IEnumerator CheckPotentialMatches()
     {
         yield return new WaitForSeconds(Constants.WaitBeforePotentialMatchesCheck);
@@ -533,11 +414,6 @@ public class ShapesManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Gets a specific candy or Bonus based on the premade level information.
-    /// </summary>
-    /// <param name="info"></param>
-    /// <returns></returns>
     private GameObject GetSpecificCandyOrBonusForPremadeLevel(string info)
     {
         var tokens = info.Split('_');
@@ -551,18 +427,6 @@ public class ShapesManager : MonoBehaviour
             }
 
         }
-        else if (tokens.Count() == 2 && tokens[1].Trim() == "B")
-        {
-            foreach (var item in BonusPrefabs)
-            {
-                if (item.name.Contains(tokens[0].Trim()))
-                    return item;
-            }
-        }
-
         throw new System.Exception("Wrong type, check your premade level");
     }
-
-
-
 }

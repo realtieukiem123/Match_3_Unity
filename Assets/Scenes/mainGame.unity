@@ -704,9 +704,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc043a35351bec840a343783f285c0aa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DebugText: {fileID: 1816048249}
   ScoreText: {fileID: 1807116963}
-  ShowDebugInfo: 0
   CandyPrefabs:
   - {fileID: 189422, guid: 110002167b804ad47947089afdb9dc96, type: 3}
   - {fileID: 103784, guid: 55a0b063029169245b7743f43014b9d5, type: 3}
@@ -718,12 +716,6 @@ MonoBehaviour:
   - {fileID: 195492, guid: 4ee919a3cb1ff3448ae1b4c056dd8c35, type: 3}
   - {fileID: 125858, guid: 5268d9197b90bc44492e32f316fa679e, type: 3}
   - {fileID: 123910, guid: 1d881f16d2f366c46afb3f9e9b96654f, type: 3}
-  BonusPrefabs:
-  - {fileID: 114848, guid: 0cffe7839950f2d4c8ec4e7f3e18e4c6, type: 3}
-  - {fileID: 164388, guid: ddfddbe43693aa54c94149217791f7bd, type: 3}
-  - {fileID: 105690, guid: c9cde8189605ee449bcc97b998147d85, type: 3}
-  - {fileID: 187842, guid: 11cb4356a18183c48b07164222227d2b, type: 3}
-  - {fileID: 157836, guid: 19c708ee61002454eb4c54c029ce0eaf, type: 3}
   soundManager: {fileID: 1624638383}
 --- !u!4 &1363272350
 Transform:
@@ -734,7 +726,7 @@ Transform:
   m_GameObject: {fileID: 1363272348}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.66466385, y: -2.407161, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1140,7 +1132,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1816048249
 MonoBehaviour:
   m_ObjectHideFlags: 0
